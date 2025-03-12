@@ -1,2 +1,3 @@
 # big_chuang_project
- 大创项目所需代码合集
+ 
+**注意:要下载Chorme客户端!!!**
