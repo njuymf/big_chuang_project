@@ -233,10 +233,8 @@ def download_bilibili_video(url, save_path):
         print(f"发生未知错误: {e}")
 
 # 主函数
-def main():
-    url = input('请输入B站视频链接: ')
-    num_pages = input('请输入需要爬取的评论页数: ')
-    name = input('请输入保存的文件名: ')
+def main(url, num_pages, name):
+
     # 提取BV号和CID
     bvid = extract_bv_from_url(url)
     cid = get_cid(bvid)
@@ -270,4 +268,19 @@ def main():
     download_bilibili_video(url, video_save_path)
 
 if __name__ == '__main__':
-    main()
+    # url = input('请输入B站视频链接: ')
+    # num_pages = input('请输入需要爬取的评论页数: ')
+    # name = input('请输入保存的文件名: ')
+    # main(url, num_pages, name)
+    # 改成批量处理
+    urls = [
+        'https://www.bilibili.com/video/BV1Q54y1T7j4',
+        'https://www.bilibili.com/video/BV1Q54y1T7j4',
+        'https://www.bilibili.com/video/BV1Q54y1T7j4'
+    ]
+    num_pages = '500'
+    names = ['video1', 'video2', 'video3']
+    for url, name in zip(urls, names):
+        main(url, num_pages, name)
+    
+
