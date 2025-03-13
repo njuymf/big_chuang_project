@@ -4,6 +4,7 @@ import time
 from DrissionPage import ChromiumPage  # pip install DrissionPage  
 
 
+
 # 保存路径初始化  
 def init_save_path():  
     save_path = os.path.join(os.getcwd(), 'comments')  
@@ -94,19 +95,19 @@ def extract_comments(response):
                     comment_type, comment_level, comment_id, comment_content, comment_count,  
                     reply_count, comment_state, create_time_str, uname, sex, sign,  
                     current_level, vip_type, vip_due_str, verify_type, is_up_liked,  
-                    is_up_replied, location  
-                ])  
-    except KeyError as e:  
-        print(f"处理响应时出现错误: {e}")  
-    return comments  
+                    is_up_replied, location
+                ])
+    except KeyError as e:
+        print(f"处理响应时出现错误: {e}")
+    return comments
 
 
-# 爬取评论数据  
-def crawl_comments(url, num_pages, save_path):  
-    page = ChromiumPage()  
-    page.set.load_mode.none()  
+# 爬取评论数据
+def crawl_comments(url, num_pages, save_path):
+    page = ChromiumPage()
+    page.set.load_mode.none()
 
-    # 设置监听  
+    # 设置监听
     page.listen.start(['https://api.bilibili.com/x/v2/reply/wbi/main?', 'https://api.bilibili.com/x/v2/reply/wbi/reply?'])  
 
     # 访问页面  
@@ -114,14 +115,14 @@ def crawl_comments(url, num_pages, save_path):
     time.sleep(3)  
 
     # 模拟滚动加载  
-    for _ in range(num_pages + 1):  
+    for _ in range(int(num_pages) + 1):  
         page.scroll.to_bottom()  
         time.sleep(2)  
 
     # 捕获响应数据  
     responses = []  
     try:  
-        for _ in range(num_pages):  
+        for _ in range(int(num_pages)):  
             packet = page.listen.wait()  
             page.stop_loading()  
             responses.append(packet.response.body)  
@@ -133,33 +134,36 @@ def crawl_comments(url, num_pages, save_path):
     return responses  
 
 
-# 主函数  
-def main():  
-    # 配置参数  
-    url = 'https://www.bilibili.com/video/BV1J4y5YoEkY/?spm_id_from=333.337.search-card.all.click&vd_source=5e8e3112db65d765dc1283bfc35d140a'  
-    num_pages = 2  
+# 主函数
+def main():
+    # 配置参数
+    url = input('请输入视频评论区URL: ')
 
-    # 初始化保存路径和CSV文件  
-    save_path = init_save_path()  
-    file_path = os.path.join(save_path, 'comments.csv')  
-    init_csv(file_path)  
-
-    # 爬取评论数据  
-    responses = crawl_comments(url, num_pages, save_path)  
-
-    # 处理评论数据并保存  
-    total_comments = 0  
-    all_comments = []  
-    for response in responses:  
-        comments = extract_comments(response)  
-        total_comments += len(comments)  
-        all_comments.extend(comments)  
-
-    save_comments_to_csv(file_path, all_comments)  
-
-    # 打印总评论数  
-    print(f"总评论数量: {total_comments}")  
+    num_pages = input('请输入需要爬取的评论页数: ')
 
 
-if __name__ == '__main__':  
-    main()  
+    # 初始化保存路径和CSV文件
+    save_path = init_save_path()
+    name = input('请输入保存文件名: ')
+    file_path = os.path.join(save_path, f"{name}.csv")  
+    init_csv(file_path)
+
+    # 爬取评论数据
+    responses = crawl_comments(url, num_pages, save_path)
+
+    # 处理评论数据并保存
+    total_comments = 0
+    all_comments = []
+    for response in responses:
+        comments = extract_comments(response)
+        total_comments += len(comments)
+        all_comments.extend(comments)
+
+    save_comments_to_csv(file_path, all_comments)
+
+    # 打印总评论数
+    print(f"总评论数量: {total_comments}")
+
+
+if __name__ == '__main__':
+    main()
