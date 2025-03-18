@@ -2,8 +2,6 @@ import os
 import csv
 import time
 from DrissionPage import ChromiumPage  # pip install DrissionPage
-from Get_cid import get_cid
-import requests
 
 
 # 保存路径初始化
