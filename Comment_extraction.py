@@ -174,7 +174,7 @@ def crawl_comments(url, num_pages, save_path, file_path):
     # 模拟滚动加载
     for i in range(int(num_pages)):
         page.scroll.to_bottom()
-        time.sleep(2)
+        time.sleep(1)
 
         try:
             packet = page.listen.wait(timeout=3)  # 设置超时时间
@@ -183,11 +183,13 @@ def crawl_comments(url, num_pages, save_path, file_path):
             comments = extract_comments(response)
             total_comments += len(comments)
             save_comments_to_csv(file_path, comments)
-            time.sleep(2)  # 增加请求间隔时间
+            time.sleep(1)  # 增加请求间隔时间
         except Exception as e:
             print(f"监听或解析出现错误: {e}")
             # 增加时间戳
             print(f"当前时间: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}")
+            # 退出循环
+            break
 
 
     page.close()
