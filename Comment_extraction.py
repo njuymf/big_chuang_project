@@ -154,11 +154,10 @@ def extract_comments(response):
         print(f"处理响应时出现错误: {e}")
     return comments
 
-
-# 爬取评论数据
-def crawl_comments(url, num_pages, save_path):
+# 正确的爬取评论函数
+def crawl_comments(url, num_pages, save_path, file_path):
     page = ChromiumPage()
-    page.set.load_mode.none()
+    page.set.load_mode.none()  # 修正加载模式设置方式
 
     # 设置监听
     page.listen.start([
@@ -170,24 +169,41 @@ def crawl_comments(url, num_pages, save_path):
     page.get(url)
     time.sleep(3)
 
+    total_comments = 0
+    
+    # 初始化CSV表头（移至此处确保多线程安全）
+    if not os.path.exists(file_path):
+        init_csv(file_path)
+
     # 模拟滚动加载
-    for _ in range(int(num_pages) + 1):
+    for i in range(int(num_pages)):
         page.scroll.to_bottom()
         time.sleep(2)
 
-    # 捕获响应数据
-    responses = []
-    try:
-        for _ in range(int(num_pages)):
-            packet = page.listen.wait()
-            page.stop_loading()
-            responses.append(packet.response.body)
-            time.sleep(1)
-    except Exception as e:
-        print(f"监听或解析出现错误: {e}")
+        try:
+            packet = page.listen.wait(timeout=3)  # 设置超时时间
+            if not packet:
+                print("未捕获到请求数据包")
+                continue
+            
+            # 解析响应内容（新增JSON解析）
+            response_body = packet.response.body
+            response_data = json.loads(response_body)
+            
+            comments = extract_comments(response_data)  # 传递解析后的字典
+            total_comments += len(comments)
+            
+            # 直接保存评论（追加模式）
+            save_comments_to_csv(file_path, comments)
+            
+            time.sleep(2)  # 增加请求间隔时间
+        except Exception as e:
+            print(f"监听或解析出现错误: {e}")
+        finally:
+            page.stop_loading()  # 停止加载减少资源占用
 
     page.close()
-    return responses
+    return total_comments
 
 
 # 主函数
@@ -203,21 +219,11 @@ def main():
     init_csv(file_path)
 
     # 爬取评论数据
-    responses = crawl_comments(url, num_pages, save_path)
-
-    # 处理评论数据并保存
-    total_comments = 0
-    all_comments = []
-    for response in responses:
-        comments = extract_comments(response)
-        total_comments += len(comments)
-        all_comments.extend(comments)
-
-    save_comments_to_csv(file_path, all_comments)
+    total_comments = crawl_comments(url, num_pages, save_path, file_path)
 
     # 打印总评论数
     print(f"总评论数量: {total_comments}")
 
 
 if __name__ == '__main__':
-    main()    
+    main()

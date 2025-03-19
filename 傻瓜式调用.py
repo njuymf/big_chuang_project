@@ -97,41 +97,56 @@ def save_comments_to_csv(file_path, comments):
     with open(file_path, 'a', encoding='utf-8', newline='') as f:
         writer = csv.writer(f, quoting=csv.QUOTE_ALL)
         writer.writerows(comments)
+import time
 
+# 这里假设 ChromiumPage 是某个库中的类，实际使用时需要正确导入
+# 例如 from some_library import ChromiumPage
+import time
+
+# 假设 ChromiumPage 类已经定义
+# 这里省略 ChromiumPage 类的定义，因为你已经给出
+import time
+
+# 假设 ChromiumPage 类已经定义
+# 这里省略 ChromiumPage 类的定义，因为你已经给出
+# 正确的爬取评论函数
 # 爬取评论数据
-def crawl_comments(url, num_pages, save_path):
+def crawl_comments(url, num_pages, save_path, file_path):
     page = ChromiumPage()
-    page.set.load_mode.none()  # 禁用图片等加载加速
+    page.set.load_mode.none()
 
-    # 监听评论API（主评论+回复）
+    # 设置监听
     page.listen.start([
-        'https://api.bilibili.com/x/v2/reply/wbi/main?',  # 主评论
-        'https://api.bilibili.com/x/v2/reply/wbi/reply?'  # 回复
+        'https://api.bilibili.com/x/v2/reply/wbi/main?',
+        'https://api.bilibili.com/x/v2/reply/wbi/reply?'
     ])
 
+    # 访问页面
     page.get(url)
-    time.sleep(3)  # 等待初始加载
+    time.sleep(3)
 
-    # 滚动加载评论（初始1页 + 滚动num_pages页 = 共num_pages+1页）
-    for _ in range(num_pages):
-        page.scroll.to_bottom()  # 滚动到底部加载下一页
-        time.sleep(1.5)  # 优化等待时间
+    total_comments = 0
+    # 模拟滚动加载
+    for i in range(int(num_pages)):
+        page.scroll.to_bottom()
+        time.sleep(2)
 
-    responses = []
-    try:
-        # 捕获主评论请求（初始1页 + 滚动加载的num_pages页）
-        for _ in range(num_pages + 1):
-            # 增加超时控制（5秒内未捕获请求则跳过）
-            packet = page.listen.wait(timeout=5)  
-            if packet:
-                responses.append(packet.response.json())
-            page.stop_loading()  # 停止加载减少资源占用
-            time.sleep(0.5)
-    except Exception as e:
-        print(f"监听错误: {e}")
-    finally:
-        page.close()
-    return responses
+        try:
+            packet = page.listen.wait(timeout=3)  # 设置超时时间
+            page.stop_loading()
+            response = packet.response.body
+            comments = extract_comments(response)
+            total_comments += len(comments)
+            save_comments_to_csv(file_path, comments)
+            time.sleep(2)  # 增加请求间隔时间
+        except Exception as e:
+            # 增加时间戳显示
+            print(f"监听或解析出现错误: {e}")
+            print(f"当前时间: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}")
+
+    page.close()
+    return total_comments
+
 
 # 提取评论数据（优化去重）
 def extract_comments(response):
@@ -208,19 +223,18 @@ def main(url, num_pages, name):
     save_danmaku_to_csv(danmaku_list, danmaku_file_path)
     print(f"弹幕数据已保存到 {danmaku_file_path}")
 
-    # 提取评论数据
-    comment_save_path = init_save_path('comments')
-    comment_file_path = os.path.join(comment_save_path, f"{name}.csv")
-    init_csv(comment_file_path)
-    responses = crawl_comments(url, num_pages, comment_save_path)
-    total_comments = 0
-    all_comments = []
-    for response in responses:
-        comments = extract_comments(response)
-        total_comments += len(comments)
-        all_comments.extend(comments)
-    save_comments_to_csv(comment_file_path, all_comments)
-    print(f"总评论数量: {total_comments}，评论数据已保存到 {comment_file_path}")
+
+    # 初始化保存路径和CSV文件
+    save_path = init_save_path('comments')
+    file_path = os.path.join(save_path, f"{name}.csv")
+    init_csv(file_path)
+
+    # 爬取评论数据
+    total_comments = crawl_comments(url, num_pages, save_path, file_path)
+
+    # 打印总评论数
+    print(f"总评论数量: {total_comments}")
+
 
     # 下载视频
     video_save_path = init_save_path('videos')
@@ -239,7 +253,7 @@ if __name__ == '__main__':
         'https://www.bilibili.com/video/BV1NbzgYGEDz/?spm_id_from=333.337.search-card.all.click&vd_source=567fe6f146ff0eb55bd447b9bb79d383',
         'https://www.bilibili.com/video/BV1PbzYY6EGG/?spm_id_from=333.337.search-card.all.click&vd_source=567fe6f146ff0eb55bd447b9bb79d383'
     ]
-    num_pages = 420
+    num_pages = 300
     names = ['北大博士', '央财硕士', '羊毛月删除视频道歉','晓艳教英语','取关了好恶心','二本自媒体','都别放过这个羊毛月','北大学霸人设','老梁不郁闷']
     for url, name in zip(urls, names):
         main(url, num_pages, name)
