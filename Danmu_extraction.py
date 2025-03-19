@@ -75,3 +75,24 @@ def main():
 if __name__ == '__main__':
     main()
     
+# 外部调用接口
+def get_danmaku_from_url(url,save_name=None):
+    # 提取视频的cid
+    bvid = extract_bv_from_url(url)
+    cid = get_cid(bvid)
+    if not cid:
+        print("获取视频cid失败")
+        return
+
+    # 输入视频的cid
+    # cid = input('请输入视频的cid: ')
+    # 初始化保存路径
+    save_path = os.path.join(os.getcwd(), 'danmaku')
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+    file_path = os.path.join(save_path, f"{save_name}.csv")
+    # 获取弹幕数据
+    danmaku_list = get_danmaku(cid)
+    # 保存弹幕数据到 CSV 文件
+    save_danmaku_to_csv(danmaku_list, file_path)
+    print(f"弹幕数据已保存到 {file_path}")

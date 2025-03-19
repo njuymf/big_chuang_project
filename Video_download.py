@@ -25,3 +25,11 @@ if __name__ == "__main__":
     # 调用下载函数
     download_bilibili_video(video_url, save_path)
     
+# 外部调用接口
+def download_video_from_url(url, save_name=None):
+    # 初始化保存路径
+    save_path = os.path.join(os.getcwd(), 'videos')
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+    # 调用下载函数
+    download_bilibili_video(url, save_path)

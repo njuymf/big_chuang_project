@@ -154,10 +154,11 @@ def extract_comments(response):
         print(f"处理响应时出现错误: {e}")
     return comments
 
-# 正确的爬取评论函数
+
+# 爬取评论数据
 def crawl_comments(url, num_pages, save_path, file_path):
     page = ChromiumPage()
-    page.set.load_mode.none()  # 修正加载模式设置方式
+    page.set.load_mode.none()
 
     # 设置监听
     page.listen.start([
@@ -170,11 +171,6 @@ def crawl_comments(url, num_pages, save_path, file_path):
     time.sleep(3)
 
     total_comments = 0
-    
-    # 初始化CSV表头（移至此处确保多线程安全）
-    if not os.path.exists(file_path):
-        init_csv(file_path)
-
     # 模拟滚动加载
     for i in range(int(num_pages)):
         page.scroll.to_bottom()
@@ -182,25 +178,17 @@ def crawl_comments(url, num_pages, save_path, file_path):
 
         try:
             packet = page.listen.wait(timeout=3)  # 设置超时时间
-            if not packet:
-                print("未捕获到请求数据包")
-                continue
-            
-            # 解析响应内容（新增JSON解析）
-            response_body = packet.response.body
-            response_data = json.loads(response_body)
-            
-            comments = extract_comments(response_data)  # 传递解析后的字典
+            page.stop_loading()
+            response = packet.response.body
+            comments = extract_comments(response)
             total_comments += len(comments)
-            
-            # 直接保存评论（追加模式）
             save_comments_to_csv(file_path, comments)
-            
             time.sleep(2)  # 增加请求间隔时间
         except Exception as e:
             print(f"监听或解析出现错误: {e}")
-        finally:
-            page.stop_loading()  # 停止加载减少资源占用
+            # 增加时间戳
+            print(f"当前时间: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}")
+
 
     page.close()
     return total_comments
@@ -227,3 +215,20 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+# 外部调用接口
+def get_comments_from_url(url, num_pages, save_name=None):
+    # 初始化保存路径和CSV文件
+    save_path = init_save_path()
+    if save_name is None:
+        name = input('请输入保存文件名: ')
+    else:
+        name = save_name
+    file_path = os.path.join(save_path, f"{name}.csv")
+    init_csv(file_path)
+
+    # 爬取评论数据
+    total_comments = crawl_comments(url, num_pages, save_path, file_path)
+
+    # 打印总评论数
+    print(f"总评论数量: {total_comments}")
