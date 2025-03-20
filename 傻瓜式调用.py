@@ -2,7 +2,6 @@ from Danmu_extraction import get_danmaku_from_url
 from Video_download import download_video_from_url
 import os
 import time
-from Comment_extraction import get_comments_from_url
 
 
 

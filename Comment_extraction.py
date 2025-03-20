@@ -354,23 +354,4 @@ if __name__ == "__main__":
 
     print("所有视频评论爬取完成！")
 
-# 外部调用接口
-def get_comments_from_url(url,name):
-    """获取评论数据"""
-    bv = url.replace("https://www.bilibili.com/video/", "")
-    video_url = r"https://api.bilibili.com/x/v2/reply?pn=1&type=1&oid={bv}&sort=2".format(bv=bv)
-    response = requests.get(video_url, headers=headers)
-    if len(response.json()) == 3:
-        print("此链接已失效")
-        return None
-    data1 = get_top(url, headers)
-    data2 = get_root(url, headers)
-    data0 = pd.concat([data1, data2], ignore_index=True)
-
-    # 为每个视频创建一个独立的 CSV 文件
-    file_name = f"{name}_comment.csv"
-    data0.to_csv(file_name, index=False, encoding='utf-8-sig')
-    print(f"已爬完视频 {name} 的评论数据，保存到 {file_name}")
-
-
-# 以上代码是一个完整的Python脚本，用于从Bilibili网站爬取视频评论数据。它使用requests库发送HTTP请求，获取评论数据，并将其存储到CSV文件中。脚本还定义了一些函数来处理评论的解析和数据清洗。最后，它提供了一个外部调用接口，可以根据视频链接获取评论数据。
+from Get_cid import extract_bv_from_url, get_cid
