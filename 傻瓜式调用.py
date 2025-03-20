@@ -1,8 +1,8 @@
 from Danmu_extraction import get_danmaku_from_url
 from Video_download import download_video_from_url
 import os
-from Comment_extraction import get_comments_from_url
 import time
+from Comment_extraction import get_comments_from_url
 
 
 
@@ -23,10 +23,11 @@ def main():
     for url, name in zip(urls, names):
         get_danmaku_from_url(url, name)
         print(f"弹幕数据已保存到 {name}.csv")
+        get_comments_from_url(url, name)
+        print(f"评论数据已保存到 {name}.csv")
         download_video_from_url(url, name)
         print(f"视频下载成功，保存路径为: {name}.mp4")
-        get_comments_from_url(url, num_pages, name)
-        print(f"评论数据已保存到 {name}.csv")
+
         
 
 
